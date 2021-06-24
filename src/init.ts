@@ -21,6 +21,7 @@ function sameVnode(vnode1: VNode, vnode2: VNode): boolean {
   const isSameIs = vnode1.data?.is === vnode2.data?.is;
   const isSameSel = vnode1.sel === vnode2.sel;
 
+  // 选择器，key，is
   return isSameSel && isSameKey && isSameIs;
 }
 
@@ -43,6 +44,7 @@ function createKeyToOldIdx(
 ): KeyToIndexMap {
   const map: KeyToIndexMap = {};
   for (let i = beginIdx; i <= endIdx; ++i) {
+    // 获取节点的key
     const key = children[i]?.key;
     if (key !== undefined) {
       map[key as string] = i;
@@ -112,6 +114,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
 
   function createElm(vnode: VNode, insertedVnodeQueue: VNodeQueue): Node {
     let i: any;
+    // 处理data
     let data = vnode.data;
     if (data !== undefined) {
       const init = data.hook?.init;
@@ -122,10 +125,12 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     }
     const children = vnode.children;
     const sel = vnode.sel;
+    // 选择器是否为!
     if (sel === "!") {
       if (isUndef(vnode.text)) {
         vnode.text = "";
       }
+      // 创建注释
       vnode.elm = api.createComment(vnode.text!);
     } else if (sel !== undefined) {
       // Parse selector
@@ -230,6 +235,13 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     }
   }
 
+  /***
+   * 这里是diff， 双双指针
+   *
+   * v-for的遍历的key，不要使用index,
+   * 1. 因为在反转数组的时候会有问题
+   * 2. 删除节点的时候会有问题
+   */
   function updateChildren(
     parentElm: Node,
     oldCh: VNode[],
@@ -238,34 +250,51 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
   ) {
     let oldStartIdx = 0;
     let newStartIdx = 0;
+
     let oldEndIdx = oldCh.length - 1;
     let oldStartVnode = oldCh[0];
     let oldEndVnode = oldCh[oldEndIdx];
+
     let newEndIdx = newCh.length - 1;
     let newStartVnode = newCh[0];
     let newEndVnode = newCh[newEndIdx];
+
     let oldKeyToIdx: KeyToIndexMap | undefined;
     let idxInOld: number;
     let elmToMove: VNode;
     let before: any;
 
+    // oldVnode开始索引小于oldVnode结束索引 && newVnode开始索引小于newVnode结束索引
     while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+      // 左oldVnode不存在，向前进一位
       if (oldStartVnode == null) {
         oldStartVnode = oldCh[++oldStartIdx]; // Vnode might have been moved left
+
+        // 右oldVnode不存在，向后退一位
       } else if (oldEndVnode == null) {
         oldEndVnode = oldCh[--oldEndIdx];
+
+        // 左newVnode不存在，向前进一位
       } else if (newStartVnode == null) {
         newStartVnode = newCh[++newStartIdx];
+
+        // 右newVnode不存在，向后退一位
       } else if (newEndVnode == null) {
         newEndVnode = newCh[--newEndIdx];
+
+        // 左oldVnode和newVnode相同，都向前进一位
       } else if (sameVnode(oldStartVnode, newStartVnode)) {
         patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue);
         oldStartVnode = oldCh[++oldStartIdx];
         newStartVnode = newCh[++newStartIdx];
+
+        // 右oldVnode和newVnode相同，都向后退一位
       } else if (sameVnode(oldEndVnode, newEndVnode)) {
         patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue);
         oldEndVnode = oldCh[--oldEndIdx];
         newEndVnode = newCh[--newEndIdx];
+
+        // 左oldVnode和右newVnode相同，右oldVnode退一步，左newVnode进一步
       } else if (sameVnode(oldStartVnode, newEndVnode)) {
         // Vnode moved right
         patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue);
@@ -276,12 +305,16 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
         );
         oldStartVnode = oldCh[++oldStartIdx];
         newEndVnode = newCh[--newEndIdx];
+
+        // 右oldVnode和左newVnode相同，右oldVnode退一步，左newVnode进一步
       } else if (sameVnode(oldEndVnode, newStartVnode)) {
         // Vnode moved left
         patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue);
         api.insertBefore(parentElm, oldEndVnode.elm!, oldStartVnode.elm!);
         oldEndVnode = oldCh[--oldEndIdx];
         newStartVnode = newCh[++newStartIdx];
+
+        // 左newVnode节点进一步
       } else {
         if (oldKeyToIdx === undefined) {
           oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx);
@@ -311,6 +344,8 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
         newStartVnode = newCh[++newStartIdx];
       }
     }
+
+    // 左oldVnode索引小于右oldVnode索引 || 左newVnode索引小于右newVnode索引
     if (oldStartIdx <= oldEndIdx || newStartIdx <= newEndIdx) {
       if (oldStartIdx > oldEndIdx) {
         before = newCh[newEndIdx + 1] == null ? null : newCh[newEndIdx + 1].elm;
@@ -344,15 +379,20 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
         cbs.update[i](oldVnode, vnode);
       vnode.data.hook?.update?.(oldVnode, vnode);
     }
+    // 文本节点
     if (isUndef(vnode.text)) {
+      // 新老节点都在
       if (isDef(oldCh) && isDef(ch)) {
         if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue);
       } else if (isDef(ch)) {
+        // 这里说明新节点在，老节点不在
         if (isDef(oldVnode.text)) api.setTextContent(elm, "");
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue);
       } else if (isDef(oldCh)) {
+        // 这里是老节点在，新节点不在
         removeVnodes(elm, oldCh, 0, oldCh.length - 1);
       } else if (isDef(oldVnode.text)) {
+        // 老文本节点
         api.setTextContent(elm, "");
       }
     } else if (oldVnode.text !== vnode.text) {
