@@ -10,20 +10,30 @@ const xChar = 120;
 
 function updateAttrs(oldVnode: VNode, vnode: VNode): void {
   let key: string;
+  // 获取vnode的dom对象
   const elm: Element = vnode.elm as Element;
+  // 获取oldVnode中data的attrs属性
   let oldAttrs = (oldVnode.data as VNodeData).attrs;
+  // 获取newVnode中data的attrs属性
   let attrs = (vnode.data as VNodeData).attrs;
 
+  // 两个节点的属性都不存在
   if (!oldAttrs && !attrs) return;
+  // 两个节点的属性都相等
   if (oldAttrs === attrs) return;
+  
   oldAttrs = oldAttrs || {};
   attrs = attrs || {};
 
   // update modified attributes, add new attributes
   for (key in attrs) {
+    // 获取节点属性
     const cur = attrs[key];
+    // 获取老节点属性
     const old = oldAttrs[key];
+    // 不相等
     if (old !== cur) {
+      // 删除与添加
       if (cur === true) {
         elm.setAttribute(key, "");
       } else if (cur === false) {

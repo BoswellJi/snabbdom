@@ -3,7 +3,9 @@ import {
   classModule,
   styleModule,
   eventListenersModule,
+  propsModule,
   h,
+  datasetModule,
 } from "../../build/index.js";
 
 import { heroModule } from "./hero.js";
@@ -13,6 +15,8 @@ const patch = init([
   heroModule,
   styleModule,
   eventListenersModule,
+  propsModule,
+  datasetModule,
 ]);
 
 let vnode;
@@ -235,8 +239,57 @@ const view = (data) =>
     data.selected ? detailView(data.selected) : overviewView(data.movies),
   ]);
 
+// window.addEventListener("DOMContentLoaded", () => {
+//   const container = document.getElementById("container");
+//   vnode = patch(container, view(data));
+//   render();
+// });
+
 window.addEventListener("DOMContentLoaded", () => {
   const container = document.getElementById("container");
-  vnode = patch(container, view(data));
-  render();
+  const vnode = h(
+    "div",
+    // {
+    //   props: {
+    //     className: "Boswell",
+    //   },
+    //   dataset: {
+    //     name: "Boswell",
+    //   },
+    //   on: {
+    //     click: (e) => console.log(e),
+    //   },
+    //   style: {
+    //     color: "blue",
+    //   },
+    //   attrs: {
+    //     width: 500,
+    //   },
+    //   class: {
+    //     active: true,
+    //   },
+    // },
+    [
+      h('span','span1'),
+      h('span','span2')
+    ]
+  );
+  const newVnode = h(
+    "div",
+    // {
+    //   props: {
+    //     className: "jmz",
+    //     style: "jmz",
+    //   },
+    // },
+    [
+      h('span','span3'),
+    ]
+  );
+
+  const a1 = patch(container, vnode);
+  console.log(a1);
+
+  const a2 = patch(vnode, newVnode);
+  console.log(a2);
 });

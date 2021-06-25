@@ -174,6 +174,8 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       const hook = vnode.data!.hook;
       if (isDef(hook)) {
         hook.create?.(emptyNode, vnode);
+
+        // newVnode存在insert hook,保存起来
         if (hook.insert) {
           insertedVnodeQueue.push(vnode);
         }
@@ -227,7 +229,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
 
 
   /***
-   * 删除oldVnode
+   * 删除vnode
    */
   function removeVnodes(
     parentElm: Node,
@@ -235,7 +237,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     startIdx: number,
     endIdx: number
   ): void {
-    // 删除
+    // 
     for (; startIdx <= endIdx; ++startIdx) {
       let listeners: number;
       let rm: () => void;
@@ -294,6 +296,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     let elmToMove: VNode;
     let before: any;
 
+    // 这里比较的目的是为了找到可复用的vnode，也就是用于相同key的vnode
     // oldVnode开始索引小于oldVnode结束索引 && newVnode开始索引小于newVnode结束索引
     while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
       // 左oldVnode不存在，向前进一位
@@ -344,41 +347,33 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
         oldEndVnode = oldCh[--oldEndIdx];
         newStartVnode = newCh[++newStartIdx];
 
-        // 左newVnode节点进一步，双端比较没有找到可复用的节点
+        // 左newVnode节点进一步
       } else {
         if (oldKeyToIdx === undefined) {
-          // 用oldVnode创建key映射
           oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx);
         }
-        // 用newVnode的key匹配索引
         idxInOld = oldKeyToIdx[newStartVnode.key as string];
-        // oldVnode中找不到newVnode的key,说明，是新节点
         if (isUndef(idxInOld)) {
-          // New element 直接创建插入
+          // New element
           api.insertBefore(
             parentElm,
             createElm(newStartVnode, insertedVnodeQueue),
             oldStartVnode.elm!
           );
         } else {
-          // 获取老节点
           elmToMove = oldCh[idxInOld];
-          // 标签不同也是直接创建插入
           if (elmToMove.sel !== newStartVnode.sel) {
             api.insertBefore(
               parentElm,
               createElm(newStartVnode, insertedVnodeQueue),
               oldStartVnode.elm!
             );
-
-            // 补丁操作
           } else {
             patchVnode(elmToMove, newStartVnode, insertedVnodeQueue);
             oldCh[idxInOld] = undefined as any;
             api.insertBefore(parentElm, elmToMove.elm!, oldStartVnode.elm!);
           }
         }
-        // newVnode向前
         newStartVnode = newCh[++newStartIdx];
       }
     }
@@ -402,7 +397,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
   }
 
   /***
-   * 对vnode进行修补
+   * 获取补丁对象
    */
   function patchVnode(
     oldVnode: VNode,
@@ -429,32 +424,43 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
         cbs.update[i](oldVnode, vnode);
       vnode.data.hook?.update?.(oldVnode, vnode);
     }
-    // 非文本节点
+    // newVnode非文本节点
     if (isUndef(vnode.text)) {
+
+
       // 新老子节点都在
       if (isDef(oldCh) && isDef(ch)) {
         // diff
         if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue);
+
+         // 这里说明新节点在，老节点不在
       } else if (isDef(ch)) {
-        // 这里说明新节点在，老节点不在
+
+        // 
         if (isDef(oldVnode.text)) api.setTextContent(elm, "");
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue);
-      } else if (isDef(oldCh)) {
+
         // 这里是老节点在，新节点不在
+      } else if (isDef(oldCh)) {
         removeVnodes(elm, oldCh, 0, oldCh.length - 1);
+
+         // oldVnode是文本节点
       } else if (isDef(oldVnode.text)) {
-        // 老文本节点
         api.setTextContent(elm, "");
       }
-      // 新老文本不相同
+
+
+      // newVnode是文本节点，还与oldVnode的不同
     } else if (oldVnode.text !== vnode.text) {
+
       // oldVnode存在
       if (isDef(oldCh)) {
         removeVnodes(elm, oldCh, 0, oldCh.length - 1);
       }
       api.setTextContent(elm, vnode.text!);
     }
-    // 调用后补丁函数
+
+    // 调用vnode postpatch hook
     hook?.postpatch?.(oldVnode, vnode);
   }
 

@@ -398,7 +398,7 @@ h("a", { class: { active: true, selected: false } }, "Toggle");
 In JSX, you can use `class` like this:
 
 ```jsx
-<div class={{ "foo": true, "bar": true }} />
+<div class={{ foo: true, bar: true }} />
 // Renders as: <div class="foo bar"></div>
 ```
 
@@ -436,7 +436,7 @@ h("a", { attrs: { href: "/foo" } }, "Go to Foo");
 In JSX, you can use `attrs` like this:
 
 ```jsx
-<div attrs={{ 'aria-label': "I'm a div" }} />
+<div attrs={{ "aria-label": "I'm a div" }} />
 // Renders as: <div aria-label="I'm a div"></div>
 ```
 
@@ -492,11 +492,13 @@ h(
 In JSX, you can use `style` like this:
 
 ```jsx
-<div style={{
-  border: "1px solid #bada55",
-  color: "#c0ffee",
-  fontWeight: "bold",
-}} />
+<div
+  style={{
+    border: "1px solid #bada55",
+    color: "#c0ffee",
+    fontWeight: "bold",
+  }}
+/>
 // Renders as: <div style="border: 1px solid #bada55; color: #c0ffee; font-weight: bold"></div>
 ```
 
@@ -1030,3 +1032,19 @@ const vnode1 = h("div", [
 
 Pull requests that the community may care to provide feedback on should be
 merged after such opportunity of a few days was provided.
+
+## init.ts
+
+- patch：
+
+  - 先执行 data 数据的 pre 操作；
+  - 所有初始化和更新完了，会执行post操作
+
+
+## diff算法实现
+
+1. 双端比较
+  - 原理：
+    - 最多需要四次比较，oldVnode的左边与newVnode左边节点，右边与右边节点，左边与右边节点，右边与左边节点，这四步寻找可复用的节点，即拥有相同key值的节点；
+    - 没有找到相同节点，从newVnode左节点开始在oldVnode children匹配，找到可复用vnode,新节点直接创建；
+

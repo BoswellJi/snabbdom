@@ -42,6 +42,7 @@ export function vnode(
   text: string | undefined,
   elm: Element | Text | undefined
 ): VNode {
+  // 将节点中的key属性提出来
   const key = data === undefined ? undefined : data.key;
   return { sel, data, children, text, elm, key };
 }
