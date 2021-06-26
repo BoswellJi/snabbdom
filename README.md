@@ -1041,6 +1041,10 @@ merged after such opportunity of a few days was provided.
   - 所有初始化和更新完了，会执行post操作
 
 
+## vdom
+
+1. 每种类型的节点的区分区分；
+
 ## diff算法实现
 
 1. 双端比较

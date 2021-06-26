@@ -186,6 +186,9 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     return vnode.elm;
   }
 
+  /***
+   * 添加新的vnode
+   */
   function addVnodes(
     parentElm: Node,
     before: Node | null,
@@ -369,6 +372,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
               oldStartVnode.elm!
             );
           } else {
+            // 找到可复用节点
             patchVnode(elmToMove, newStartVnode, insertedVnodeQueue);
             oldCh[idxInOld] = undefined as any;
             api.insertBefore(parentElm, elmToMove.elm!, oldStartVnode.elm!);
@@ -397,7 +401,8 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
   }
 
   /***
-   * 获取补丁对象
+   * 获取补丁对象,
+   * 在oldVnode中找到可复用的节点才会调用这个方法
    */
   function patchVnode(
     oldVnode: VNode,
@@ -427,7 +432,6 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     // newVnode非文本节点
     if (isUndef(vnode.text)) {
 
-
       // 新老子节点都在
       if (isDef(oldCh) && isDef(ch)) {
         // diff
@@ -436,7 +440,6 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
          // 这里说明新节点在，老节点不在
       } else if (isDef(ch)) {
 
-        // 
         if (isDef(oldVnode.text)) api.setTextContent(elm, "");
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue);
 

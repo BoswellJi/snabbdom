@@ -283,7 +283,8 @@ window.addEventListener("DOMContentLoaded", () => {
     //   },
     // },
     [
-      h('span','span3'),
+      h('span',h('strong','span1')),
+      h('span','span4')
     ]
   );
 
